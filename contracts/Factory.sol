@@ -10,6 +10,7 @@ contract Factory {
     mapping(address=>TokenSale) public tokenSales;
 
     event Created(address token);
+    event Buy(address token, uint256 amount);
 
     struct TokenSale{
         address token;
@@ -47,5 +48,18 @@ contract Factory {
         emit Created(address(token));
     }
 
-    
+    function buy(address _token,uint amount) external payable{
+        TokenSale storage sale=tokenSales[_token]; //fetches you the struct, and puts inside the sale variable
+        //conditions to check if the sale is open
+        require(sale.isOpen,"Sale is closed");
+        require(sale.totalSupply>=sale.sold+amount,"Not enough tokens left");
+
+        //upddate the sale struct
+        sale.sold+=amount;
+        sale.raised+=msg.value;
+        //transfer the tokens to the buyer
+        Token(_token).transfer(msg.sender,amount);
+        
+        emit Buy(_token,amount);
+    }
 }
